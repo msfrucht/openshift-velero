@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	storagev1api "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -149,6 +150,13 @@ func initDataUploaderReconcilerWithError(needError ...error) (*DataUploadReconci
 			RestoreSize:                    &resource.Quantity{},
 		},
 	}
+	storageClassObject := &storagev1api.StorageClass{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "default",
+		},
+		Provisioner: "fake.velero",
+		Parameters:  map[string]string{},
+	}
 	var restoreSize int64
 	vscObj := &snapshotv1api.VolumeSnapshotContent{
 		ObjectMeta: metav1.ObjectMeta{
@@ -214,7 +222,7 @@ func initDataUploaderReconcilerWithError(needError ...error) (*DataUploadReconci
 		}
 	}
 
-	fakeSnapshotClient := snapshotFake.NewSimpleClientset(vsObject, vscObj)
+	fakeSnapshotClient := snapshotFake.NewSimpleClientset(vsObject, vscObj, storageClassObject)
 	fakeKubeClient := clientgofake.NewSimpleClientset(daemonSet)
 	fakeFS := velerotest.NewFakeFileSystem()
 	pathGlob := fmt.Sprintf("/host_pods/%s/volumes/*/%s", "", dataUploadName)
