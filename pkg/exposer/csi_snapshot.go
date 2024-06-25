@@ -32,17 +32,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/vmware-tanzu/velero/pkg/exposer/shallowprovisioner"
 	"github.com/vmware-tanzu/velero/pkg/nodeagent"
 	"github.com/vmware-tanzu/velero/pkg/util/boolptr"
 	"github.com/vmware-tanzu/velero/pkg/util/csi"
 	"github.com/vmware-tanzu/velero/pkg/util/kube"
 
-	shallowprovisioner "github.com/vmware-tanzu/velero/pkg/exposer/shallowprovisioner"
-
-	snapshotter "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned/typed/volumesnapshot/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // CSISnapshotExposeParam define the input param for Expose of CSI snapshots
