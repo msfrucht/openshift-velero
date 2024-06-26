@@ -226,8 +226,8 @@ func initDataUploaderReconcilerWithError(needError ...error) (*DataUploadReconci
 		}
 	}
 
-	fakeSnapshotClient := snapshotFake.NewSimpleClientset(vsObject, vscObj, storageClassObject)
-	fakeKubeClient := clientgofake.NewSimpleClientset(daemonSet)
+	fakeSnapshotClient := snapshotFake.NewSimpleClientset(vsObject, vscObj)
+	fakeKubeClient := clientgofake.NewSimpleClientset(daemonSet, storageClassObject)
 	fakeFS := velerotest.NewFakeFileSystem()
 	pathGlob := fmt.Sprintf("/host_pods/%s/volumes/*/%s", "", dataUploadName)
 	_, err = fakeFS.Create(pathGlob)

@@ -127,11 +127,11 @@ func (p cephFSProvisioner) Evaluate(storageClass *storagev1api.StorageClass) boo
 
 // cephfs only requires that the accessmode is set to readwriteonly
 func (p cephFSProvisioner) Transform(pvc *corev1api.PersistentVolumeClaim) *corev1api.PersistentVolumeClaim {
-	transform_pvc := pvc.DeepCopy()
+	transformPVC := pvc.DeepCopy()
 
-	transform_pvc.Spec.AccessModes = []corev1api.PersistentVolumeAccessMode{corev1api.ReadOnlyMany}
+	transformPVC.Spec.AccessModes = []corev1api.PersistentVolumeAccessMode{corev1api.ReadOnlyMany}
 
-	return transform_pvc
+	return transformPVC
 }
 
 /*
@@ -158,9 +158,9 @@ func (p scaleProvisioner) Evaluate(storageClass *storagev1api.StorageClass) bool
 
 // scale only requires that the accessmode is set to readwriteonly
 func (p scaleProvisioner) Transform(pvc *corev1api.PersistentVolumeClaim) *corev1api.PersistentVolumeClaim {
-	transform_pvc := pvc.DeepCopy()
+	transformPVC := pvc.DeepCopy()
 
-	transform_pvc.Spec.AccessModes = []corev1api.PersistentVolumeAccessMode{corev1api.ReadOnlyMany}
+	transformPVC.Spec.AccessModes = []corev1api.PersistentVolumeAccessMode{corev1api.ReadOnlyMany}
 
-	return transform_pvc
+	return transformPVC
 }

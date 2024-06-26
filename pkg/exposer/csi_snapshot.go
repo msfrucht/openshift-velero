@@ -386,13 +386,13 @@ func (e *csiSnapshotExposer) createBackupPVC(ctx context.Context, ownerObject co
 	}
 
 	// transform the PVC if the storage class provisioner supports shallow copy restore to avoid copy on restore for some storage provisioners
-	updated_pvc, err := shallowprovisioner.ShallowCopyTransform(ctx, e.kubeClient.StorageV1(), pvc)
+	updatedPVC, err := shallowprovisioner.ShallowCopyTransform(ctx, e.kubeClient.StorageV1(), pvc)
 	if err != nil {
 		// failed to retrieve the storageClass of the PVC
 		return nil, err
 	}
 
-	created, err := e.kubeClient.CoreV1().PersistentVolumeClaims(pvc.Namespace).Create(ctx, updated_pvc, metav1.CreateOptions{})
+	created, err := e.kubeClient.CoreV1().PersistentVolumeClaims(pvc.Namespace).Create(ctx, updatedPVC, metav1.CreateOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "error to create pvc")
 	}
