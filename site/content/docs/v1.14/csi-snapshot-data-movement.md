@@ -121,7 +121,7 @@ oc annotate namespace <velero namespace> openshift.io/node-selector=""
 oc create -n <velero namespace> -f ds.yaml
 ```
 
-***Openshift on IBM Cloud***
+**Openshift on IBM Cloud**
 
 Update the host path for volumes in the node-agent DaemonSet in the Velero namespace from `/var/lib/kubelet/pods` to
 `/var/data/kubelet/pods`.
