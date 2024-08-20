@@ -1426,17 +1426,19 @@ func TestMakePodPVCAttachment(t *testing.T) {
 			expectedVolumePath: "/volume-3",
 		},
 		{
-			name:       "read-only backup volume",
+			name:       "readonly filesystem volume",
 			volumeName: "volume-4",
 			volumeMode: corev1api.PersistentVolumeFilesystem,
 			expectedVolumeMount: []corev1api.VolumeMount{
 				{
 					Name:      "volume-4",
 					MountPath: "/volume-4",
-					ReadOnly:  true,
+					ReadOnly: true,
 				},
 			},
+			expectedVolumePath: "/volume-4",
 		},
+
 	}
 
 	for _, tc := range testCases {
