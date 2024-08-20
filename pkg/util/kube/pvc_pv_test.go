@@ -1442,11 +1442,16 @@ func TestMakePodPVCAttachment(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var volMode *v1.PersistentVolumeMode
+			var readOnly = false
 			if tc.volumeMode != "" {
 				volMode = &tc.volumeMode
 			}
 
-			mount, device, path := MakePodPVCAttachment(tc.volumeName, volMode, tc.expectedVolumeMount[0].ReadOnly)
+			if len(tc.expectedVolumeMount) > 0 {
+				readOnly = tc.expectedVolumeMount[0].ReadOnly
+			}
+
+			mount, device, path := MakePodPVCAttachment(tc.volumeName, volMode, readOnly)
 
 			assert.Equal(t, tc.expectedVolumeMount, mount)
 			assert.Equal(t, tc.expectedVolumeDevice, device)
