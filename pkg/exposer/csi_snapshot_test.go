@@ -391,7 +391,7 @@ func TestExpose(t *testing.T) {
 			expectedVolumeSize: resource.NewQuantity(567890, ""),
 		},
 		{
-			name: "backup pod mounts read-only PVCs",
+			name: "backup pod mounts readonly PVCs",
 			ownerBackup: backup,
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName: "fake-vs",
@@ -399,6 +399,7 @@ func TestExpose(t *testing.T) {
 				AccessMode: AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
 				ExposeTimeout: time.Millisecond,
+				StorageClass: "fake-storage-class",
 				BackupPVCConfig: map[string]nodeagent.BackupPVC{
 					"fake-storage-class": {
 						StorageClass: "fake-storage-class",
