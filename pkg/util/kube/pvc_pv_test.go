@@ -1446,7 +1446,7 @@ func TestMakePodPVCAttachment(t *testing.T) {
 				volMode = &tc.volumeMode
 			}
 
-			mount, device, path := MakePodPVCAttachment(tc.volumeName, volMode, tc.readOnly)
+			mount, device, path := MakePodPVCAttachment(tc.volumeName, volMode, tc.expectedVolumeMount[0].ReadOnly)
 
 			assert.Equal(t, tc.expectedVolumeMount, mount)
 			assert.Equal(t, tc.expectedVolumeDevice, device)
