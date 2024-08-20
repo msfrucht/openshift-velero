@@ -1389,6 +1389,7 @@ func TestMakePodPVCAttachment(t *testing.T) {
 		expectedVolumeMount  []corev1api.VolumeMount
 		expectedVolumeDevice []corev1api.VolumeDevice
 		expectedVolumePath   string
+		readOnly             bool
 	}{
 		{
 			name:       "no volume mode specified",
@@ -1400,6 +1401,7 @@ func TestMakePodPVCAttachment(t *testing.T) {
 				},
 			},
 			expectedVolumePath: "/volume-1",
+			readOnly:           false,
 		},
 		{
 			name:       "fs mode specified",
@@ -1412,6 +1414,7 @@ func TestMakePodPVCAttachment(t *testing.T) {
 				},
 			},
 			expectedVolumePath: "/volume-2",
+			readOnly:           false,
 		},
 		{
 			name:       "block volume mode specified",
@@ -1424,6 +1427,19 @@ func TestMakePodPVCAttachment(t *testing.T) {
 				},
 			},
 			expectedVolumePath: "/volume-3",
+			readOnly:           false,
+		},
+		{
+			name:       "read-only backup volume",
+			volumeName: "volume-4",
+			volumeMode: corev1api.PersistentVolumeFilesystem,
+			expectedVolumeMount: []corev1api.VolumeMount{
+				{
+					Name:      "volume-4",
+					MountPath: "/volume-4",
+				},
+			},
+			readOnly: true,
 		},
 	}
 
@@ -1434,11 +1450,14 @@ func TestMakePodPVCAttachment(t *testing.T) {
 				volMode = &tc.volumeMode
 			}
 
-			mount, device, path := MakePodPVCAttachment(tc.volumeName, volMode)
+			mount, device, path := MakePodPVCAttachment(tc.volumeName, volMode, tc.readOnly)
 
 			assert.Equal(t, tc.expectedVolumeMount, mount)
 			assert.Equal(t, tc.expectedVolumeDevice, device)
 			assert.Equal(t, tc.expectedVolumePath, path)
+			if tc.readOnly {
+				assert.True(t, tc.readOnly)
+			}
 		})
 	}
 }

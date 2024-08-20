@@ -425,6 +425,13 @@ func (e *csiSnapshotExposer) createBackupPod(ctx context.Context, ownerObject co
 
 	containerName := string(ownerObject.UID)
 	volumeName := string(ownerObject.UID)
+	var backupPVCReadOnly = false
+
+	for _, accessMode := range backupPVC.Spec.AccessModes {
+		if accessMode == corev1.ReadOnlyMany {
+			backupPVCReadOnly = true
+		}
+	}
 
 	podInfo, err := getInheritedPodInfo(ctx, e.kubeClient, ownerObject.Namespace)
 	if err != nil {
@@ -432,7 +439,7 @@ func (e *csiSnapshotExposer) createBackupPod(ctx context.Context, ownerObject co
 	}
 
 	var gracePeriod int64 = 0
-	volumeMounts, volumeDevices, volumePath := kube.MakePodPVCAttachment(volumeName, backupPVC.Spec.VolumeMode)
+	volumeMounts, volumeDevices, volumePath := kube.MakePodPVCAttachment(volumeName, backupPVC.Spec.VolumeMode, backupPVCReadOnly)
 	volumeMounts = append(volumeMounts, podInfo.volumeMounts...)
 
 	volumes := []corev1.Volume{{
@@ -440,6 +447,7 @@ func (e *csiSnapshotExposer) createBackupPod(ctx context.Context, ownerObject co
 		VolumeSource: corev1.VolumeSource{
 			PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 				ClaimName: backupPVC.Name,
+				ReadOnly:  backupPVCReadOnly,
 			},
 		},
 	}}

@@ -390,6 +390,30 @@ func TestExpose(t *testing.T) {
 			},
 			expectedVolumeSize: resource.NewQuantity(567890, ""),
 		},
+		{
+			name: "backup pod mounts read-only PVCs",
+			ownerBackup: backup,
+			exposeParam: CSISnapshotExposeParam{
+				SnapshotName: "fake-vs",
+				SourceNamespace: "fake-ns",
+				AccessMode: AccessModeFileSystem,
+				OperationTimeout: time.Millisecond,
+				ExposeTimeout: time.Millisecond,
+				BackupPVCConfig: map[string]nodeagent.BackupPVC{
+					"fake-storage-class": {
+						StorageClass: "fake-storage-class",
+						ReadOnly: true,
+					},
+				},
+			},
+			snapshotClientObj: []runtime.Object{
+				vsObject,
+				vscObj,
+			},
+			kubeClientObj: []runtime.Object{
+				daemonSet,
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -426,8 +450,20 @@ func TestExpose(t *testing.T) {
 			if err == nil {
 				assert.NoError(t, err)
 
-				_, err = exposer.kubeClient.CoreV1().Pods(ownerObject.Namespace).Get(context.Background(), ownerObject.Name, metav1.GetOptions{})
+				pod, err := exposer.kubeClient.CoreV1().Pods(ownerObject.Namespace).Get(context.Background(), ownerObject.Name, metav1.GetOptions{})
 				assert.NoError(t, err)
+
+				if test.exposeParam.BackupPVCConfig != nil {
+					if value, exists := test.exposeParam.BackupPVCConfig["fake-storage-class"]; exists {
+						if value.ReadOnly {
+							for _, volume := range pod.Spec.Volumes {
+								if volume.PersistentVolumeClaim != nil {
+									assert.True(t, volume.PersistentVolumeClaim.ReadOnly)
+								}
+							}
+						}
+					}
+				}
 
 				backupPVC, err := exposer.kubeClient.CoreV1().PersistentVolumeClaims(ownerObject.Namespace).Get(context.Background(), ownerObject.Name, metav1.GetOptions{})
 				assert.NoError(t, err)
