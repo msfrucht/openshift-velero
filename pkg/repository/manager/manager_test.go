@@ -182,6 +182,9 @@ func TestBuildMaintenanceJob(t *testing.T) {
 				assert.Equal(t, param.BackupRepo.Namespace, job.Namespace)
 				assert.Equal(t, param.BackupRepo.Name, job.Labels[repository.RepositoryNameLabel])
 
+				// Check pod template metadata
+				assert.Equal(t, param.BackupRepo.Name, job.Spec.Template.ObjectMeta.Labels[repository.RepositoryNameLabel])
+
 				// Check container
 				assert.Len(t, job.Spec.Template.Spec.Containers, 1)
 				container := job.Spec.Template.Spec.Containers[0]
