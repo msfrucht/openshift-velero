@@ -109,6 +109,7 @@ func TestExpose(t *testing.T) {
 	}
 
 	snapshotHandle := "fake-handle"
+	sourceVolumeMode := corev1.PersistentVolumeFilesystem
 	vscObj := &snapshotv1api.VolumeSnapshotContent{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: vscName,
@@ -121,6 +122,7 @@ func TestExpose(t *testing.T) {
 			DeletionPolicy:          snapshotv1api.VolumeSnapshotContentDelete,
 			Driver:                  "fake-driver",
 			VolumeSnapshotClassName: &snapshotClass,
+			SourceVolumeMode:        &sourceVolumeMode,
 		},
 		Status: &snapshotv1api.VolumeSnapshotContentStatus{
 			RestoreSize:    &restoreSize,
