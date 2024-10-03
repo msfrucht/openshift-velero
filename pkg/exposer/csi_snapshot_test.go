@@ -522,6 +522,7 @@ func TestExpose(t *testing.T) {
 				assert.Equal(t, expectedVSC.Spec.DeletionPolicy, vscObj.Spec.DeletionPolicy)
 				assert.Equal(t, expectedVSC.Spec.Driver, vscObj.Spec.Driver)
 				assert.Equal(t, *expectedVSC.Spec.VolumeSnapshotClassName, *vscObj.Spec.VolumeSnapshotClassName)
+				assert.Equal(t, *expectedVSC.Spec.SourceVolumeMode, *vscObj.Spec.SourceVolumeMode)
 
 				if test.expectedVolumeSize != nil {
 					assert.Equal(t, *test.expectedVolumeSize, backupPVC.Spec.Resources.Requests[corev1.ResourceStorage])
