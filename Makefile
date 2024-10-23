@@ -30,7 +30,7 @@ GCR_IMAGE ?= $(GCR_REGISTRY)/$(BIN)
 
 # We allow the Dockerfile to be configurable to enable the use of custom Dockerfiles
 # that pull base images from different registries.
-VELERO_DOCKERFILE ?= Dockerfile
+VELERO_DOCKERFILE ?= Dockerfile.ubi
 BUILDER_IMAGE_DOCKERFILE ?= hack/build-image/Dockerfile
 
 # Calculate the realpath of the build-image Dockerfile as we `cd` into the hack/build
@@ -197,6 +197,7 @@ ifneq ($(BUILDX_ENABLED), true)
 	$(error $(BUILDX_ERROR))
 endif
 	@docker buildx build --pull \
+	--no-cache \
 	--output=type=$(BUILDX_OUTPUT_TYPE) \
 	--platform $(BUILDX_PLATFORMS) \
 	$(addprefix -t , $(IMAGE_TAGS)) \
@@ -209,7 +210,7 @@ endif
 	--build-arg=GIT_TREE_STATE=$(GIT_TREE_STATE) \
 	--build-arg=REGISTRY=$(REGISTRY) \
 	--build-arg=RESTIC_VERSION=$(RESTIC_VERSION) \
-	-f $(VELERO_DOCKERFILE) .
+	-f$(VELERO_DOCKERFILE) .
 	@echo "container: $(IMAGE):$(VERSION)"
 ifeq ($(BUILDX_OUTPUT_TYPE)_$(REGISTRY), registry_velero)
 	docker pull $(IMAGE):$(VERSION)
