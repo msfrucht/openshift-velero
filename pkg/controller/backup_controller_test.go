@@ -200,6 +200,12 @@ func TestProcessBackupValidationFailures(t *testing.T) {
 			backupLocation: defaultBackupLocation,
 			expectedErrs:   []string{"include-resources, exclude-resources and include-cluster-resources are old filter parameters.\ninclude-cluster-scoped-resources, exclude-cluster-scoped-resources, include-namespace-scoped-resources and exclude-namespace-scoped-resources are new filter parameters.\nThey cannot be used together"},
 		},
+		{
+			name:           "install namespace is always excluded",
+			backup:         defaultBackup().IncludedNamespaces("velero").Result(),
+			backupLocation: defaultBackupLocation,
+			expectedErrs:   []string{"Invalid included/excluded namespace lists: excludes list cannot contain an item in the includes list: velero"},
+		},
 	}
 
 	for _, test := range tests {
@@ -221,14 +227,15 @@ func TestProcessBackupValidationFailures(t *testing.T) {
 			}
 
 			c := &backupReconciler{
-				logger:                logger,
-				discoveryHelper:       discoveryHelper,
-				kbClient:              fakeClient,
-				defaultBackupLocation: defaultBackupLocation.Name,
-				clock:                 &clock.RealClock{},
-				formatFlag:            formatFlag,
-				metrics:               metrics.NewServerMetrics(),
-				workerPool:            pkgbackup.StartItemBlockWorkerPool(context.Background(), 1, logger),
+				logger:                    logger,
+				discoveryHelper:           discoveryHelper,
+				kbClient:                  fakeClient,
+				defaultBackupLocation:     defaultBackupLocation.Name,
+				defaultExcludedNamespaces: []string{"velero"},
+				clock:                     &clock.RealClock{},
+				formatFlag:                formatFlag,
+				metrics:                   metrics.NewServerMetrics(),
+				workerPool:                pkgbackup.StartItemBlockWorkerPool(context.Background(), 1, logger),
 			}
 			defer c.workerPool.Stop()
 

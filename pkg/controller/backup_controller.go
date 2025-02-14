@@ -79,6 +79,7 @@ type backupReconciler struct {
 	resourceTimeout             time.Duration
 	defaultItemOperationTimeout time.Duration
 	defaultSnapshotLocations    map[string]string
+	defaultExcludedNamespaces   []string
 	metrics                     *metrics.ServerMetrics
 	backupStoreGetter           persistence.ObjectBackupStoreGetter
 	formatFlag                  logging.Format
@@ -106,6 +107,7 @@ func NewBackupReconciler(
 	resourceTimeout time.Duration,
 	defaultItemOperationTimeout time.Duration,
 	defaultSnapshotLocations map[string]string,
+	defaultExcludedNamespaces []string,
 	metrics *metrics.ServerMetrics,
 	backupStoreGetter persistence.ObjectBackupStoreGetter,
 	formatFlag logging.Format,
@@ -132,6 +134,7 @@ func NewBackupReconciler(
 		resourceTimeout:             resourceTimeout,
 		defaultItemOperationTimeout: defaultItemOperationTimeout,
 		defaultSnapshotLocations:    defaultSnapshotLocations,
+		defaultExcludedNamespaces:   defaultExcludedNamespaces,
 		metrics:                     metrics,
 		backupStoreGetter:           backupStoreGetter,
 		formatFlag:                  formatFlag,
@@ -372,6 +375,11 @@ func (b *backupReconciler) prepareBackupRequest(backup *velerov1api.Backup, logg
 
 	if request.Spec.SnapshotMoveData == nil {
 		request.Spec.SnapshotMoveData = &b.defaultSnapshotMoveData
+	}
+
+	// if namespaces have been excluded, exclude the default namespaces including the install namespace
+	if request.Spec.ExcludedNamespaces == nil {
+		request.Spec.ExcludedNamespaces = b.defaultExcludedNamespaces
 	}
 
 	// find which storage location to use

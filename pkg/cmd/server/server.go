@@ -636,6 +636,7 @@ func (s *server) runControllers(defaultVolumeSnapshotLocations map[string]string
 			s.config.ResourceTimeout,
 			s.config.DefaultItemOperationTimeout,
 			defaultVolumeSnapshotLocations,
+			[]string{s.namespace},
 			s.metrics,
 			backupStoreGetter,
 			s.config.LogFormat.Parse(),
