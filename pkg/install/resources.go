@@ -41,17 +41,21 @@ const (
 
 var (
 	// default values for Velero server pod resource request/limit
-	DefaultVeleroPodCPURequest = "500m"
-	DefaultVeleroPodMemRequest = "128Mi"
-	DefaultVeleroPodCPULimit   = "1000m"
-	DefaultVeleroPodMemLimit   = "512Mi"
+	DefaultVeleroPodCPURequest              = "500m"
+	DefaultVeleroPodMemRequest              = "128Mi"
+	DefaultVeleroPodCPULimit                = "1000m"
+	DefaultVeleroPodMemLimit                = "512Mi"
+	DefaultVeleroPodEphemeralStorageRequest = "0"
+	DefaultVeleroPodEphemeralStorageLimit   = "0"
 
 	// default values for node-agent pod resource request/limit,
 	// "0" means no request/limit is set, so as to make the QoS as BestEffort
-	DefaultNodeAgentPodCPURequest = "0"
-	DefaultNodeAgentPodMemRequest = "0"
-	DefaultNodeAgentPodCPULimit   = "0"
-	DefaultNodeAgentPodMemLimit   = "0"
+	DefaultNodeAgentPodCPURequest              = "0"
+	DefaultNodeAgentPodMemRequest              = "0"
+	DefaultNodeAgentPodCPULimit                = "0"
+	DefaultNodeAgentPodMemLimit                = "0"
+	DefaultNodeAgentPodEphemeralStorageRequest = "0"
+	DefaultNodeAgentPodEphemeralStorageLimit   = "0"
 
 	DefaultVeleroNamespace = "velero"
 

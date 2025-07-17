@@ -246,6 +246,7 @@ func TestGetConfigs(t *testing.T) {
 	cmWithInvalidDataFormat := builder.ForConfigMap("fake-ns", "node-agent-config").Data("fake-key", "wrong").Result()
 	cmWithoutCocurrentData := builder.ForConfigMap("fake-ns", "node-agent-config").Data("fake-key", "{\"someothers\":{\"someother\": 10}}").Result()
 	cmWithValidData := builder.ForConfigMap("fake-ns", "node-agent-config").Data("fake-key", "{\"loadConcurrency\":{\"globalConfig\": 5}}").Result()
+	cmWithPodResources := builder.ForConfigMap("fake-ns", "node-agent-config").Data("fake-key", `{"podResources":{"cpuRequest":"100m","memoryRequest":"128Mi","ephemeralStorageRequest":"2Gi","cpuLimit":"200m","memoryLimit":"256Mi","ephemeralStorageLimit":"4Gi"}}`).Result()
 
 	tests := []struct {
 		name          string
@@ -302,6 +303,23 @@ func TestGetConfigs(t *testing.T) {
 			expectResult: &Configs{
 				LoadConcurrency: &LoadConcurrency{
 					GlobalConfig: 5,
+				},
+			},
+		},
+		{
+			name:      "pod resources",
+			namespace: "fake-ns",
+			kubeClientObj: []runtime.Object{
+				cmWithPodResources,
+			},
+			expectResult: &Configs{
+				PodResources: &kube.PodResources{
+					CPURequest:              "100m",
+					MemoryRequest:           "128Mi",
+					EphemeralStorageRequest: "2Gi",
+					CPULimit:                "200m",
+					MemoryLimit:             "256Mi",
+					EphemeralStorageLimit:   "4Gi",
 				},
 			},
 		},

@@ -453,6 +453,8 @@ func buildJob(
 	// Set resource limits and requests
 	cpuRequest := podResources.CPURequest
 	memRequest := podResources.MemoryRequest
+	ephemeralStorageRequest := podResources.EphemeralStorageRequest
+	ephemeralStorageLimit := podResources.EphemeralStorageLimit
 	cpuLimit := podResources.CPULimit
 	memLimit := podResources.MemoryLimit
 	if config != nil && config.PodResources != nil {
@@ -460,8 +462,10 @@ func buildJob(
 		memRequest = config.PodResources.MemoryRequest
 		cpuLimit = config.PodResources.CPULimit
 		memLimit = config.PodResources.MemoryLimit
+		ephemeralStorageRequest = config.PodResources.EphemeralStorageRequest
+		ephemeralStorageLimit = config.PodResources.EphemeralStorageLimit
 	}
-	resources, err := kube.ParseResourceRequirements(cpuRequest, memRequest, cpuLimit, memLimit)
+	resources, err := kube.ParseResourceRequirements(cpuRequest, memRequest, ephemeralStorageRequest, cpuLimit, memLimit, ephemeralStorageLimit)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse resource requirements for maintenance job")
 	}

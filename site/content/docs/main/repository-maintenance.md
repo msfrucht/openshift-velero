@@ -5,7 +5,7 @@ layout: docs
 
 From v1.14 on, Velero decouples repository maintenance from the Velero server by launching a k8s job to do maintenance when needed, to mitigate the impact on the Velero server during backups.
 
-Before v1.14.0, Velero performs periodic maintenance on the repository within Velero server pod, this operation may consume significant CPU and memory resources in some cases, leading to Velero server being killed by OOM. Now Velero will launch independent k8s jobs to do the maintenance in Velero installation namespace.
+Before v1.14.0, Velero performs periodic maintenance on the repository within Velero server pod, this operation may consume significant CPU, memory resources in some cases, leading to Velero server being killed by OOM. Now Velero will launch independent k8s jobs to do the maintenance in Velero installation namespace.
 
 For repository maintenance jobs, there's no limit on resources by default. You could configure the job resource limitation based on target data to be backed up.
 
@@ -67,7 +67,9 @@ cat <<EOF > repo-maintenance-job-config.json
             "cpuRequest": "100m",
             "cpuLimit": "200m",
             "memoryRequest": "100Mi",
-            "memoryLimit": "200Mi"
+            "memoryLimit": "200Mi",
+            "ephemeralStorageRequest": "0",
+            "ephemeralStorageLimit": "0"
         },
         "loadAffinity": [
             {

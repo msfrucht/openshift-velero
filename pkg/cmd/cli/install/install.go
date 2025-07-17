@@ -42,55 +42,59 @@ import (
 
 // Options collects all the options for installing Velero into a Kubernetes cluster.
 type Options struct {
-	Namespace                       string
-	Image                           string
-	BucketName                      string
-	Prefix                          string
-	ProviderName                    string
-	PodAnnotations                  flag.Map
-	PodLabels                       flag.Map
-	ServiceAccountAnnotations       flag.Map
-	ServiceAccountName              string
-	VeleroPodCPURequest             string
-	VeleroPodMemRequest             string
-	VeleroPodCPULimit               string
-	VeleroPodMemLimit               string
-	NodeAgentPodCPURequest          string
-	NodeAgentPodMemRequest          string
-	NodeAgentPodCPULimit            string
-	NodeAgentPodMemLimit            string
-	RestoreOnly                     bool
-	SecretFile                      string
-	NoSecret                        bool
-	DryRun                          bool
-	BackupStorageConfig             flag.Map
-	VolumeSnapshotConfig            flag.Map
-	UseNodeAgent                    bool
-	UseNodeAgentWindows             bool
-	PrivilegedNodeAgent             bool
-	Wait                            bool
-	UseVolumeSnapshots              bool
-	DefaultRepoMaintenanceFrequency time.Duration
-	GarbageCollectionFrequency      time.Duration
-	PodVolumeOperationTimeout       time.Duration
-	Plugins                         flag.StringArray
-	NoDefaultBackupLocation         bool
-	CRDsOnly                        bool
-	CACertFile                      string
-	Features                        string
-	DefaultVolumesToFsBackup        bool
-	UploaderType                    string
-	DefaultSnapshotMoveData         bool
-	DisableInformerCache            bool
-	ScheduleSkipImmediately         bool
-	PodResources                    kubeutil.PodResources
-	KeepLatestMaintenanceJobs       int
-	BackupRepoConfigMap             string
-	RepoMaintenanceJobConfigMap     string
-	NodeAgentConfigMap              string
-	ItemBlockWorkerCount            int
-	NodeAgentDisableHostPath        bool
-	kubeletRootDir                  string
+	Namespace                           string
+	Image                               string
+	BucketName                          string
+	Prefix                              string
+	ProviderName                        string
+	PodAnnotations                      flag.Map
+	PodLabels                           flag.Map
+	ServiceAccountAnnotations           flag.Map
+	ServiceAccountName                  string
+	VeleroPodCPURequest                 string
+	VeleroPodMemRequest                 string
+	VeleroPodCPULimit                   string
+	VeleroPodMemLimit                   string
+	NodeAgentPodCPURequest              string
+	NodeAgentPodMemRequest              string
+	NodeAgentPodCPULimit                string
+	NodeAgentPodMemLimit                string
+	RestoreOnly                         bool
+	SecretFile                          string
+	NoSecret                            bool
+	DryRun                              bool
+	BackupStorageConfig                 flag.Map
+	VolumeSnapshotConfig                flag.Map
+	UseNodeAgent                        bool
+	UseNodeAgentWindows                 bool
+	PrivilegedNodeAgent                 bool
+	Wait                                bool
+	UseVolumeSnapshots                  bool
+	DefaultRepoMaintenanceFrequency     time.Duration
+	GarbageCollectionFrequency          time.Duration
+	PodVolumeOperationTimeout           time.Duration
+	Plugins                             flag.StringArray
+	NoDefaultBackupLocation             bool
+	CRDsOnly                            bool
+	CACertFile                          string
+	Features                            string
+	DefaultVolumesToFsBackup            bool
+	UploaderType                        string
+	DefaultSnapshotMoveData             bool
+	DisableInformerCache                bool
+	ScheduleSkipImmediately             bool
+	PodResources                        kubeutil.PodResources
+	KeepLatestMaintenanceJobs           int
+	BackupRepoConfigMap                 string
+	RepoMaintenanceJobConfigMap         string
+	NodeAgentConfigMap                  string
+	ItemBlockWorkerCount                int
+	NodeAgentDisableHostPath            bool
+	kubeletRootDir                      string
+	VeleroPodEphemeralStorageRequest    string
+	VeleroPodEphemeralStorageLimit      string
+	NodeAgentPodEphemeralStorageRequest string
+	NodeAgentPodEphemeralStorageLimit   string
 }
 
 // BindFlags adds command line values to the options struct.
@@ -109,14 +113,17 @@ func (o *Options) BindFlags(flags *pflag.FlagSet) {
 		"  Optional, if this attribute is set, the default service account 'velero' will not be created, and the flag --sa-annotations will be disregarded.")
 	flags.StringVar(&o.VeleroPodCPURequest, "velero-pod-cpu-request", o.VeleroPodCPURequest, `CPU request for Velero pod. A value of "0" is treated as unbounded. Optional.`)
 	flags.StringVar(&o.VeleroPodMemRequest, "velero-pod-mem-request", o.VeleroPodMemRequest, `Memory request for Velero pod. A value of "0" is treated as unbounded. Optional.`)
+	flags.StringVar(&o.VeleroPodEphemeralStorageRequest, "velero-pod-ephemeral-storage-request", o.VeleroPodEphemeralStorageRequest, `Ephemeral storage request for Velero pod. A value of "0" is treated as unbounded. Optional`)
 	flags.StringVar(&o.VeleroPodCPULimit, "velero-pod-cpu-limit", o.VeleroPodCPULimit, `CPU limit for Velero pod. A value of "0" is treated as unbounded. Optional.`)
 	flags.StringVar(&o.VeleroPodMemLimit, "velero-pod-mem-limit", o.VeleroPodMemLimit, `Memory limit for Velero pod. A value of "0" is treated as unbounded. Optional.`)
+	flags.StringVar(&o.VeleroPodEphemeralStorageLimit, "velero-pod-ephemeral-storage-limit", o.VeleroPodEphemeralStorageLimit, `Ephemeral storage limit for Velero pod. A value of "0" is treated as unbounded. Optional.`)
 	flags.StringVar(&o.NodeAgentPodCPURequest, "node-agent-pod-cpu-request", o.NodeAgentPodCPURequest, `CPU request for node-agent pod. A value of "0" is treated as unbounded. Optional.`)
 	flags.StringVar(&o.NodeAgentPodMemRequest, "node-agent-pod-mem-request", o.NodeAgentPodMemRequest, `Memory request for node-agent pod. A value of "0" is treated as unbounded. Optional.`)
+	flags.StringVar(&o.NodeAgentPodEphemeralStorageRequest, "node-agent-pod-ephemeral-storage-request", o.NodeAgentPodEphemeralStorageRequest, `Epphemeral Storage request for node-agent pod. A value of "0" is treated as unbounded. Optional.`)
 	flags.StringVar(&o.NodeAgentPodCPULimit, "node-agent-pod-cpu-limit", o.NodeAgentPodCPULimit, `CPU limit for node-agent pod. A value of "0" is treated as unbounded. Optional.`)
 	flags.StringVar(&o.NodeAgentPodMemLimit, "node-agent-pod-mem-limit", o.NodeAgentPodMemLimit, `Memory limit for node-agent pod. A value of "0" is treated as unbounded. Optional.`)
+	flags.StringVar(&o.NodeAgentPodEphemeralStorageLimit, "node-agent-pod-ephemeral-storage-limit", o.NodeAgentPodEphemeralStorageLimit, `Ephemeral storage limit for node-agent pod. A value of "0" is treated as unbounded. Optional.`)
 	flags.StringVar(&o.kubeletRootDir, "kubelet-root-dir", o.kubeletRootDir, `Kubelet root directory for the node agent. Optional.`)
-
 	flags.Var(&o.BackupStorageConfig, "backup-location-config", "Configuration to use for the backup storage location. Format is key1=value1,key2=value2")
 	flags.Var(&o.VolumeSnapshotConfig, "snapshot-location-config", "Configuration to use for the volume snapshot location. Format is key1=value1,key2=value2")
 	flags.BoolVar(&o.UseVolumeSnapshots, "use-volume-snapshots", o.UseVolumeSnapshots, "Whether or not to create snapshot location automatically. Set to false if you do not plan to create volume snapshots via a storage provider.")
@@ -199,21 +206,25 @@ func (o *Options) BindFlags(flags *pflag.FlagSet) {
 // NewInstallOptions instantiates a new, default InstallOptions struct.
 func NewInstallOptions() *Options {
 	return &Options{
-		Namespace:                 velerov1api.DefaultNamespace,
-		Image:                     velero.DefaultVeleroImage(),
-		BackupStorageConfig:       flag.NewMap(),
-		VolumeSnapshotConfig:      flag.NewMap(),
-		PodAnnotations:            flag.NewMap(),
-		PodLabels:                 flag.NewMap(),
-		ServiceAccountAnnotations: flag.NewMap(),
-		VeleroPodCPURequest:       install.DefaultVeleroPodCPURequest,
-		VeleroPodMemRequest:       install.DefaultVeleroPodMemRequest,
-		VeleroPodCPULimit:         install.DefaultVeleroPodCPULimit,
-		VeleroPodMemLimit:         install.DefaultVeleroPodMemLimit,
-		NodeAgentPodCPURequest:    install.DefaultNodeAgentPodCPURequest,
-		NodeAgentPodMemRequest:    install.DefaultNodeAgentPodMemRequest,
-		NodeAgentPodCPULimit:      install.DefaultNodeAgentPodCPULimit,
-		NodeAgentPodMemLimit:      install.DefaultNodeAgentPodMemLimit,
+		Namespace:                           velerov1api.DefaultNamespace,
+		Image:                               velero.DefaultVeleroImage(),
+		BackupStorageConfig:                 flag.NewMap(),
+		VolumeSnapshotConfig:                flag.NewMap(),
+		PodAnnotations:                      flag.NewMap(),
+		PodLabels:                           flag.NewMap(),
+		ServiceAccountAnnotations:           flag.NewMap(),
+		VeleroPodCPURequest:                 install.DefaultVeleroPodCPURequest,
+		VeleroPodMemRequest:                 install.DefaultVeleroPodMemRequest,
+		VeleroPodEphemeralStorageRequest:    install.DefaultVeleroPodEphemeralStorageRequest,
+		VeleroPodCPULimit:                   install.DefaultVeleroPodCPULimit,
+		VeleroPodMemLimit:                   install.DefaultVeleroPodMemLimit,
+		VeleroPodEphemeralStorageLimit:      install.DefaultVeleroPodEphemeralStorageLimit,
+		NodeAgentPodCPURequest:              install.DefaultNodeAgentPodCPURequest,
+		NodeAgentPodMemRequest:              install.DefaultNodeAgentPodMemRequest,
+		NodeAgentPodEphemeralStorageRequest: install.DefaultNodeAgentPodEphemeralStorageRequest,
+		NodeAgentPodCPULimit:                install.DefaultNodeAgentPodCPULimit,
+		NodeAgentPodMemLimit:                install.DefaultNodeAgentPodMemLimit,
+		NodeAgentPodEphemeralStorageLimit:   install.DefaultNodeAgentPodEphemeralStorageLimit,
 		// Default to creating a VSL unless we're told otherwise
 		UseVolumeSnapshots:       true,
 		NoDefaultBackupLocation:  false,
@@ -252,11 +263,11 @@ func (o *Options) AsVeleroOptions() (*install.VeleroOptions, error) {
 			return nil, err
 		}
 	}
-	veleroPodResources, err := kubeutil.ParseResourceRequirements(o.VeleroPodCPURequest, o.VeleroPodMemRequest, o.VeleroPodCPULimit, o.VeleroPodMemLimit)
+	veleroPodResources, err := kubeutil.ParseResourceRequirements(o.VeleroPodCPURequest, o.VeleroPodMemRequest, o.VeleroPodEphemeralStorageRequest, o.VeleroPodCPULimit, o.VeleroPodMemLimit, o.VeleroPodEphemeralStorageLimit)
 	if err != nil {
 		return nil, err
 	}
-	nodeAgentPodResources, err := kubeutil.ParseResourceRequirements(o.NodeAgentPodCPURequest, o.NodeAgentPodMemRequest, o.NodeAgentPodCPULimit, o.NodeAgentPodMemLimit)
+	nodeAgentPodResources, err := kubeutil.ParseResourceRequirements(o.NodeAgentPodCPURequest, o.NodeAgentPodMemRequest, o.NodeAgentPodEphemeralStorageRequest, o.NodeAgentPodCPULimit, o.NodeAgentPodMemLimit, o.NodeAgentPodEphemeralStorageLimit)
 	if err != nil {
 		return nil, err
 	}

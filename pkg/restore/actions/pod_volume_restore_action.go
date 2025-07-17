@@ -46,10 +46,11 @@ import (
 )
 
 const (
-	defaultCPURequestLimit = "100m"
-	defaultMemRequestLimit = "128Mi"
-	defaultCommand         = "/velero-restore-helper"
-	restoreHelperUID       = 1000
+	defaultCPURequestLimit              = "100m"
+	defaultMemRequestLimit              = "128Mi"
+	defaultEphemeralStorageRequestLimit = "0"
+	defaultCommand                      = "/velero-restore-helper"
+	restoreHelperUID                    = 1000
 )
 
 type PodVolumeRestoreAction struct {
@@ -148,8 +149,8 @@ func (a *PodVolumeRestoreAction) Execute(input *velero.RestoreItemActionExecuteI
 	image := getImage(log, config, a.veleroImage)
 	log.Infof("Using image %q", image)
 
-	cpuRequest, memRequest := getResourceRequests(log, config)
-	cpuLimit, memLimit := getResourceLimits(log, config)
+	cpuRequest, memRequest, ephemeralStorageRequest := getResourceRequests(log, config)
+	cpuLimit, memLimit, ephemeralStorageLimit := getResourceLimits(log, config)
 	if cpuRequest == "" {
 		cpuRequest = defaultCPURequestLimit
 	}
@@ -162,13 +163,19 @@ func (a *PodVolumeRestoreAction) Execute(input *velero.RestoreItemActionExecuteI
 	if memLimit == "" {
 		memLimit = defaultMemRequestLimit
 	}
+	if ephemeralStorageRequest == "" {
+		ephemeralStorageRequest = defaultEphemeralStorageRequestLimit
+	}
+	if ephemeralStorageLimit == "" {
+		ephemeralStorageLimit = defaultEphemeralStorageRequestLimit
+	}
 
-	resourceReqs, err := kube.ParseResourceRequirements(cpuRequest, memRequest, cpuLimit, memLimit)
+	resourceReqs, err := kube.ParseResourceRequirements(cpuRequest, memRequest, ephemeralStorageRequest, cpuLimit, memLimit, ephemeralStorageLimit)
 	if err != nil {
 		log.Errorf("couldn't parse resource requirements: %s.", err)
 		resourceReqs, _ = kube.ParseResourceRequirements(
-			defaultCPURequestLimit, defaultMemRequestLimit, // requests
-			defaultCPURequestLimit, defaultMemRequestLimit, // limits
+			defaultCPURequestLimit, defaultMemRequestLimit, ephemeralStorageRequest, // requests
+			defaultCPURequestLimit, defaultMemRequestLimit, ephemeralStorageLimit, // limits
 		)
 	}
 
@@ -270,24 +277,24 @@ func getImage(log logrus.FieldLogger, config *corev1api.ConfigMap, defaultImage 
 
 // getResourceRequests extracts the CPU and memory requests from a ConfigMap.
 // The 0 values are valid if the keys are not present
-func getResourceRequests(log logrus.FieldLogger, config *corev1api.ConfigMap) (string, string) {
+func getResourceRequests(log logrus.FieldLogger, config *corev1api.ConfigMap) (string, string, string) {
 	if config == nil {
 		log.Debug("No config found for plugin")
-		return "", ""
+		return "", "", ""
 	}
 
-	return config.Data["cpuRequest"], config.Data["memRequest"]
+	return config.Data["cpuRequest"], config.Data["memRequest"], defaultEphemeralStorageRequestLimit
 }
 
 // getResourceLimits extracts the CPU and memory limits from a ConfigMap.
 // The 0 values are valid if the keys are not present
-func getResourceLimits(log logrus.FieldLogger, config *corev1api.ConfigMap) (string, string) {
+func getResourceLimits(log logrus.FieldLogger, config *corev1api.ConfigMap) (string, string, string) {
 	if config == nil {
 		log.Debug("No config found for plugin")
-		return "", ""
+		return "", "", ""
 	}
 
-	return config.Data["cpuLimit"], config.Data["memLimit"]
+	return config.Data["cpuLimit"], config.Data["memLimit"], defaultEphemeralStorageRequestLimit
 }
 
 // getSecurityContext extracts securityContext runAsUser, runAsGroup, allowPrivilegeEscalation, and securityContext from a ConfigMap.

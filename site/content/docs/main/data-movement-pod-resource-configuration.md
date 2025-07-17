@@ -25,8 +25,10 @@ Here is a sample of the configMap with ```podResources```:
     "podResources": {
         "cpuRequest": "1000m",
         "cpuLimit": "1000m",
+        "ephemeralStorageRequest": "0",
         "memoryRequest": "512Mi",
-        "memoryLimit": "1Gi"        
+        "memoryLimit": "1Gi",
+        "ephemeralStorageLimit": "0"
     }
 }
 ```

@@ -47,11 +47,13 @@ const (
 	defaultMaxConcurrentK8SConnections = 30
 	defaultDisableInformerCache        = false
 
-	DefaultKeepLatestMaintenanceJobs = 3
-	DefaultMaintenanceJobCPURequest  = "0"
-	DefaultMaintenanceJobCPULimit    = "0"
-	DefaultMaintenanceJobMemRequest  = "0"
-	DefaultMaintenanceJobMemLimit    = "0"
+	DefaultKeepLatestMaintenanceJobs             = 3
+	DefaultMaintenanceJobCPURequest              = "0"
+	DefaultMaintenanceJobCPULimit                = "0"
+	DefaultMaintenanceJobMemRequest              = "0"
+	DefaultMaintenanceJobMemLimit                = "0"
+	DefaultMaintenanceJobEphemeralStorageRequest = "0"
+	DefaultMaintenanceJobEphemeralStorageLimit   = "0"
 
 	DefaultItemBlockWorkerCount = 1
 )
@@ -214,10 +216,12 @@ func GetDefaultConfig() *Config {
 		ScheduleSkipImmediately:        false,
 		CredentialsDirectory:           credentials.DefaultStoreDirectory(),
 		PodResources: kube.PodResources{
-			CPURequest:    DefaultMaintenanceJobCPULimit,
-			CPULimit:      DefaultMaintenanceJobCPURequest,
-			MemoryRequest: DefaultMaintenanceJobMemRequest,
-			MemoryLimit:   DefaultMaintenanceJobMemLimit,
+			CPURequest:              DefaultMaintenanceJobCPULimit,
+			CPULimit:                DefaultMaintenanceJobCPURequest,
+			MemoryRequest:           DefaultMaintenanceJobMemRequest,
+			MemoryLimit:             DefaultMaintenanceJobMemLimit,
+			EphemeralStorageRequest: DefaultMaintenanceJobEphemeralStorageRequest,
+			EphemeralStorageLimit:   DefaultMaintenanceJobEphemeralStorageLimit,
 		},
 		KeepLatestMaintenanceJobs: DefaultKeepLatestMaintenanceJobs,
 		ItemBlockWorkerCount:      DefaultItemBlockWorkerCount,

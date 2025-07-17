@@ -118,8 +118,8 @@ func TestGetImage(t *testing.T) {
 // TestPodVolumeRestoreActionExecute tests the pod volume restore item action plugin's Execute method.
 func TestPodVolumeRestoreActionExecute(t *testing.T) {
 	resourceReqs, _ := kube.ParseResourceRequirements(
-		defaultCPURequestLimit, defaultMemRequestLimit, // requests
-		defaultCPURequestLimit, defaultMemRequestLimit, // limits
+		defaultCPURequestLimit, defaultMemRequestLimit, defaultEphemeralStorageRequestLimit, // requests
+		defaultCPURequestLimit, defaultMemRequestLimit, defaultEphemeralStorageRequestLimit, // limits
 	)
 	id := int64(1000)
 	securityContext := corev1api.SecurityContext{

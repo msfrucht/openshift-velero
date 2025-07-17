@@ -436,15 +436,17 @@ func TestGetJobConfig(t *testing.T) {
 					Name:      repoMaintenanceJobConfig,
 				},
 				Data: map[string]string{
-					"test-default-kopia": "{\"podResources\":{\"cpuRequest\":\"100m\",\"cpuLimit\":\"200m\",\"memoryRequest\":\"100Mi\",\"memoryLimit\":\"200Mi\"},\"loadAffinity\":[{\"nodeSelector\":{\"matchExpressions\":[{\"key\":\"cloud.google.com/machine-family\",\"operator\":\"In\",\"values\":[\"e2\"]}]}}]}",
+					"test-default-kopia": "{\"podResources\":{\"cpuRequest\":\"100m\",\"cpuLimit\":\"200m\",\"memoryRequest\":\"100Mi\",\"memoryLimit\":\"200Mi\",\"ephemeralStorageRequest\":\"2Gi\",\"ephemeralStorageLimit\":\"4Gi\"},\"loadAffinity\":[{\"nodeSelector\":{\"matchExpressions\":[{\"key\":\"cloud.google.com/machine-family\",\"operator\":\"In\",\"values\":[\"e2\"]}]}}]}",
 				},
 			},
 			expectedConfig: &JobConfigs{
 				PodResources: &kube.PodResources{
-					CPURequest:    "100m",
-					CPULimit:      "200m",
-					MemoryRequest: "100Mi",
-					MemoryLimit:   "200Mi",
+					CPURequest:              "100m",
+					CPULimit:                "200m",
+					MemoryRequest:           "100Mi",
+					MemoryLimit:             "200Mi",
+					EphemeralStorageRequest: "2Gi",
+					EphemeralStorageLimit:   "4Gi",
 				},
 				LoadAffinities: []*kube.LoadAffinity{
 					{
@@ -470,15 +472,17 @@ func TestGetJobConfig(t *testing.T) {
 					Name:      repoMaintenanceJobConfig,
 				},
 				Data: map[string]string{
-					GlobalKeyForRepoMaintenanceJobCM: "{\"podResources\":{\"cpuRequest\":\"50m\",\"cpuLimit\":\"100m\",\"memoryRequest\":\"50Mi\",\"memoryLimit\":\"100Mi\"},\"loadAffinity\":[{\"nodeSelector\":{\"matchExpressions\":[{\"key\":\"cloud.google.com/machine-family\",\"operator\":\"In\",\"values\":[\"n2\"]}]}}]}",
+					GlobalKeyForRepoMaintenanceJobCM: "{\"podResources\":{\"cpuRequest\":\"50m\",\"cpuLimit\":\"100m\",\"memoryRequest\":\"50Mi\",\"memoryLimit\":\"100Mi\",\"ephemeralStorageRequest\":\"2Gi\",\"ephemeralStorageLimit\":\"4Gi\"},\"loadAffinity\":[{\"nodeSelector\":{\"matchExpressions\":[{\"key\":\"cloud.google.com/machine-family\",\"operator\":\"In\",\"values\":[\"n2\"]}]}}]}",
 				},
 			},
 			expectedConfig: &JobConfigs{
 				PodResources: &kube.PodResources{
-					CPURequest:    "50m",
-					CPULimit:      "100m",
-					MemoryRequest: "50Mi",
-					MemoryLimit:   "100Mi",
+					CPURequest:              "50m",
+					CPULimit:                "100m",
+					MemoryRequest:           "50Mi",
+					MemoryLimit:             "100Mi",
+					EphemeralStorageRequest: "2Gi",
+					EphemeralStorageLimit:   "4Gi",
 				},
 				LoadAffinities: []*kube.LoadAffinity{
 					{
@@ -504,16 +508,18 @@ func TestGetJobConfig(t *testing.T) {
 					Name:      repoMaintenanceJobConfig,
 				},
 				Data: map[string]string{
-					GlobalKeyForRepoMaintenanceJobCM: "{\"podResources\":{\"cpuRequest\":\"50m\",\"cpuLimit\":\"100m\",\"memoryRequest\":\"50Mi\",\"memoryLimit\":\"100Mi\"},\"loadAffinity\":[{\"nodeSelector\":{\"matchExpressions\":[{\"key\":\"cloud.google.com/machine-family\",\"operator\":\"In\",\"values\":[\"n2\"]}]}}]}",
-					"test-default-kopia":             "{\"podResources\":{\"cpuRequest\":\"100m\",\"cpuLimit\":\"200m\",\"memoryRequest\":\"100Mi\",\"memoryLimit\":\"200Mi\"},\"loadAffinity\":[{\"nodeSelector\":{\"matchExpressions\":[{\"key\":\"cloud.google.com/machine-family\",\"operator\":\"In\",\"values\":[\"e2\"]}]}}]}",
+					GlobalKeyForRepoMaintenanceJobCM: "{\"podResources\":{\"cpuRequest\":\"50m\",\"cpuLimit\":\"100m\",\"memoryRequest\":\"50Mi\",\"memoryLimit\":\"100Mi\",\"ephemeralStorageRequest\":\"1Gi\",\"ephemeralStorageLimit\":\"2Gi\"},\"loadAffinity\":[{\"nodeSelector\":{\"matchExpressions\":[{\"key\":\"cloud.google.com/machine-family\",\"operator\":\"In\",\"values\":[\"n2\"]}]}}]}",
+					"test-default-kopia":             "{\"podResources\":{\"cpuRequest\":\"100m\",\"cpuLimit\":\"200m\",\"memoryRequest\":\"100Mi\",\"memoryLimit\":\"200Mi\",\"ephemeralStorageRequest\":\"3Gi\",\"ephemeralStorageLimit\":\"6Gi\"},\"loadAffinity\":[{\"nodeSelector\":{\"matchExpressions\":[{\"key\":\"cloud.google.com/machine-family\",\"operator\":\"In\",\"values\":[\"e2\"]}]}}]}",
 				},
 			},
 			expectedConfig: &JobConfigs{
 				PodResources: &kube.PodResources{
-					CPURequest:    "100m",
-					CPULimit:      "200m",
-					MemoryRequest: "100Mi",
-					MemoryLimit:   "200Mi",
+					CPURequest:              "100m",
+					CPULimit:                "200m",
+					MemoryRequest:           "100Mi",
+					MemoryLimit:             "200Mi",
+					EphemeralStorageRequest: "3Gi",
+					EphemeralStorageLimit:   "6Gi",
 				},
 				LoadAffinities: []*kube.LoadAffinity{
 					{
@@ -945,10 +951,12 @@ func TestBuildJob(t *testing.T) {
 			name: "Valid maintenance job without third party labels",
 			m: &JobConfigs{
 				PodResources: &kube.PodResources{
-					CPURequest:    "100m",
-					MemoryRequest: "128Mi",
-					CPULimit:      "200m",
-					MemoryLimit:   "256Mi",
+					CPURequest:              "100m",
+					MemoryRequest:           "128Mi",
+					EphemeralStorageRequest: "2Gi",
+					CPULimit:                "200m",
+					MemoryLimit:             "256Mi",
+					EphemeralStorageLimit:   "2Gi",
 				},
 			},
 			deploy:          &deploy,
@@ -997,10 +1005,12 @@ func TestBuildJob(t *testing.T) {
 			name: "Valid maintenance job with third party labels",
 			m: &JobConfigs{
 				PodResources: &kube.PodResources{
-					CPURequest:    "100m",
-					MemoryRequest: "128Mi",
-					CPULimit:      "200m",
-					MemoryLimit:   "256Mi",
+					CPURequest:              "100m",
+					MemoryRequest:           "128Mi",
+					EphemeralStorageRequest: "2Gi",
+					CPULimit:                "200m",
+					MemoryLimit:             "256Mi",
+					EphemeralStorageLimit:   "2Gi",
 				},
 			},
 			deploy:          deploy2,
@@ -1046,10 +1056,12 @@ func TestBuildJob(t *testing.T) {
 			name: "Error getting Velero server deployment",
 			m: &JobConfigs{
 				PodResources: &kube.PodResources{
-					CPURequest:    "100m",
-					MemoryRequest: "128Mi",
-					CPULimit:      "200m",
-					MemoryLimit:   "256Mi",
+					CPURequest:              "100m",
+					MemoryRequest:           "128Mi",
+					EphemeralStorageRequest: "2Gi",
+					CPULimit:                "200m",
+					MemoryLimit:             "256Mi",
+					EphemeralStorageLimit:   "2Gi",
 				},
 			},
 			logLevel:        logrus.InfoLevel,
@@ -1134,12 +1146,14 @@ func TestBuildJob(t *testing.T) {
 				// Check resources
 				expectedResources := corev1api.ResourceRequirements{
 					Requests: corev1api.ResourceList{
-						corev1api.ResourceCPU:    resource.MustParse(tc.m.PodResources.CPURequest),
-						corev1api.ResourceMemory: resource.MustParse(tc.m.PodResources.MemoryRequest),
+						corev1api.ResourceCPU:              resource.MustParse(tc.m.PodResources.CPURequest),
+						corev1api.ResourceMemory:           resource.MustParse(tc.m.PodResources.MemoryRequest),
+						corev1api.ResourceEphemeralStorage: resource.MustParse(tc.m.PodResources.EphemeralStorageRequest),
 					},
 					Limits: corev1api.ResourceList{
-						corev1api.ResourceCPU:    resource.MustParse(tc.m.PodResources.CPULimit),
-						corev1api.ResourceMemory: resource.MustParse(tc.m.PodResources.MemoryLimit),
+						corev1api.ResourceCPU:              resource.MustParse(tc.m.PodResources.CPULimit),
+						corev1api.ResourceMemory:           resource.MustParse(tc.m.PodResources.MemoryLimit),
+						corev1api.ResourceEphemeralStorage: resource.MustParse(tc.m.PodResources.EphemeralStorageLimit),
 					},
 				}
 				assert.Equal(t, expectedResources, container.Resources)
