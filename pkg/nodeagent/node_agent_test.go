@@ -250,6 +250,7 @@ func TestGetConfigs(t *testing.T) {
 	cmWithPriorityClass := builder.ForConfigMap("fake-ns", "node-agent-config").Data("fake-key", "{\"priorityClassName\": \"high-priority\"}").Result()
 	cmWithPriorityClassAndOther := builder.ForConfigMap("fake-ns", "node-agent-config").Data("fake-key", "{\"priorityClassName\": \"low-priority\", \"loadConcurrency\":{\"globalConfig\": 3}}").Result()
 	cmWithMultipleKeysInData := builder.ForConfigMap("fake-ns", "node-agent-config").Data("fake-key-1", "{}", "fake-key-2", "{}").Result()
+	cmWithBackupPVC := builder.ForConfigMap("fake-ns", "node-agent-config").Data("fake-key", "{\"backupPVC\":{\"fake-sc\":{\"accessModes\":[\"ReadOnlyMany\"]}}}").Result()
 
 	tests := []struct {
 		name          string
@@ -340,6 +341,34 @@ func TestGetConfigs(t *testing.T) {
 			},
 			expectErr: "more than one keys are found in ConfigMap node-agent-config's data. only expect one",
 		},
+		{
+			name:      "with backuppvc accessmodes",
+			namespace: "fake-ns",
+			kubeClientObj: []runtime.Object{
+				cmWithBackupPVC,
+			},
+			expectResult: &velerotypes.NodeAgentConfigs{
+				BackupPVCConfig: map[string]velerotypes.BackupPVC{
+					"fake-sc": {
+						AccessModes: []corev1api.PersistentVolumeAccessMode{corev1api.ReadOnlyMany},
+					},
+				},
+			},
+		},
+		{
+			name:      "with backuppvc accessmodes",
+			namespace: "fake-ns",
+			kubeClientObj: []runtime.Object{
+				cmWithBackupPVC,
+			},
+			expectResult: &velerotypes.NodeAgentConfigs{
+				BackupPVCConfig: map[string]velerotypes.BackupPVC{
+					"fake-sc": {
+						AccessModes: []corev1api.PersistentVolumeAccessMode{corev1api.ReadOnlyMany},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -365,6 +394,13 @@ func TestGetConfigs(t *testing.T) {
 						assert.Nil(t, result.LoadConcurrency)
 					} else {
 						assert.Equal(t, *test.expectResult.LoadConcurrency, *result.LoadConcurrency)
+					}
+
+					// Check BackupPVC
+					if test.expectResult.BackupPVCConfig == nil {
+						assert.Nil(t, result.BackupPVCConfig)
+					} else {
+						assert.Equal(t, test.expectResult.BackupPVCConfig, result.BackupPVCConfig)
 					}
 				}
 			} else {

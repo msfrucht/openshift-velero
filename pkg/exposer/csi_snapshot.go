@@ -197,6 +197,7 @@ func (e *csiSnapshotExposer) Expose(ctx context.Context, ownerObject corev1api.O
 	spcNoRelabeling := false
 	backupPVCAnnotations := map[string]string{}
 	intoleratableNodes := []string{}
+	pvcAccessModes := []corev1api.PersistentVolumeAccessMode{corev1api.ReadWriteOnce}
 	if value, exists := csiExposeParam.BackupPVCConfig[csiExposeParam.StorageClass]; exists {
 		if value.StorageClass != "" {
 			backupPVCStorageClass = value.StorageClass
@@ -215,6 +216,10 @@ func (e *csiSnapshotExposer) Expose(ctx context.Context, ownerObject corev1api.O
 			backupPVCAnnotations = value.Annotations
 		}
 
+		if len(value.AccessModes) > 0 {
+			pvcAccessModes = value.AccessModes
+		}
+
 		if _, found := backupPVCAnnotations[util.VSphereCNSFastCloneAnno]; found {
 			if n, err := kube.GetPVAttachedNodes(ctx, csiExposeParam.SourcePVName, e.kubeClient.StorageV1()); err != nil {
 				curLog.WithField("source PV", csiExposeParam.SourcePVName).WithError(err).Warnf("Failed to get attached node for source PV, ignore %s annotation", util.VSphereCNSFastCloneAnno)
@@ -225,7 +230,12 @@ func (e *csiSnapshotExposer) Expose(ctx context.Context, ownerObject corev1api.O
 		}
 	}
 
-	backupPVC, err := e.createBackupPVC(ctx, ownerObject, backupVS.Name, backupPVCStorageClass, csiExposeParam.AccessMode, volumeSize, backupPVCReadOnly, backupPVCAnnotations)
+	// readOnly takes priority as the older backupPVC value
+	if backupPVCReadOnly {
+		pvcAccessModes = []corev1api.PersistentVolumeAccessMode{corev1api.ReadOnlyMany}
+	}
+
+	backupPVC, err := e.createBackupPVC(ctx, ownerObject, backupVS.Name, backupPVCStorageClass, csiExposeParam.AccessMode, volumeSize, backupPVCAnnotations, pvcAccessModes)
 	if err != nil {
 		return errors.Wrap(err, "error to create backup pvc")
 	}
@@ -513,18 +523,12 @@ func (e *csiSnapshotExposer) createBackupVSC(ctx context.Context, ownerObject co
 	return e.csiSnapshotClient.VolumeSnapshotContents().Create(ctx, vsc, metav1.CreateOptions{})
 }
 
-func (e *csiSnapshotExposer) createBackupPVC(ctx context.Context, ownerObject corev1api.ObjectReference, backupVS, storageClass, accessMode string, resource resource.Quantity, readOnly bool, annotations map[string]string) (*corev1api.PersistentVolumeClaim, error) {
+func (e *csiSnapshotExposer) createBackupPVC(ctx context.Context, ownerObject corev1api.ObjectReference, backupVS, storageClass, accessMode string, resource resource.Quantity, annotations map[string]string, pvcAccessModes []corev1api.PersistentVolumeAccessMode) (*corev1api.PersistentVolumeClaim, error) {
 	backupPVCName := ownerObject.Name
 
 	volumeMode, err := getVolumeModeByAccessMode(accessMode)
 	if err != nil {
 		return nil, err
-	}
-
-	pvcAccessMode := corev1api.ReadWriteOnce
-
-	if readOnly {
-		pvcAccessMode = corev1api.ReadOnlyMany
 	}
 
 	dataSource := &corev1api.TypedLocalObjectReference{
@@ -549,9 +553,7 @@ func (e *csiSnapshotExposer) createBackupPVC(ctx context.Context, ownerObject co
 			},
 		},
 		Spec: corev1api.PersistentVolumeClaimSpec{
-			AccessModes: []corev1api.PersistentVolumeAccessMode{
-				pvcAccessMode,
-			},
+			AccessModes:      pvcAccessModes,
 			StorageClassName: &storageClass,
 			VolumeMode:       &volumeMode,
 			DataSource:       dataSource,

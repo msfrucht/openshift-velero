@@ -17,6 +17,7 @@ limitations under the License.
 package types
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/vmware-tanzu/velero/pkg/util/kube"
@@ -59,6 +60,9 @@ type BackupPVC struct {
 
 	// Annotations permits setting annotations for the backupPVC
 	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// AccessModes sets the value of Spec.AccessModes in the backupPVC
+	AccessModes []corev1.PersistentVolumeAccessMode
 }
 
 type RestorePVC struct {
