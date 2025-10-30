@@ -580,3 +580,19 @@ func GetPVAttachedNodes(ctx context.Context, pv string, storageClient storagev1.
 
 	return nodes, nil
 }
+
+func GetPVNodeSelector(ctx context.Context, pvName string, coreClient corev1client.CoreV1Interface) ([]corev1api.NodeSelectorTerm, error) {
+	if pvName == "" {
+		return nil, errors.New("PV name is not set")
+	}
+	pv, err := coreClient.PersistentVolumes().Get(ctx, pvName, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to retrieve PV %s", pvName)
+	}
+
+	if pv.Spec.NodeAffinity != nil && pv.Spec.NodeAffinity.Required != nil {
+		return pv.Spec.NodeAffinity.Required.NodeSelectorTerms, nil
+	}
+
+	return nil, nil
+}

@@ -258,14 +258,27 @@ func ToSystemAffinity(loadAffinities []*LoadAffinity) *corev1api.Affinity {
 
 	if len(nodeSelectorTermList) > 0 {
 		result := new(corev1api.Affinity)
-		result.NodeAffinity = new(corev1api.NodeAffinity)
-		result.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = new(corev1api.NodeSelector)
-		result.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = nodeSelectorTermList
-
+		ExtendNodeSelectorTerms(result, nodeSelectorTermList)
 		return result
 	}
 
 	return nil
+}
+
+func ExtendNodeSelectorTerms(affinity *corev1api.Affinity, nodeSelectorTerms []corev1api.NodeSelectorTerm) {
+	if len(nodeSelectorTerms) == 0 {
+		return
+	}
+
+	if affinity.NodeAffinity == nil {
+		affinity.NodeAffinity = new(corev1api.NodeAffinity)
+	}
+
+	if affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+		affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = new(corev1api.NodeSelector)
+	}
+
+	affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = append(affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms, nodeSelectorTerms...)
 }
 
 func DiagnosePod(pod *corev1api.Pod, events *corev1api.EventList) string {

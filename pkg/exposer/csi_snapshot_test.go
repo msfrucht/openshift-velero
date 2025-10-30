@@ -24,6 +24,7 @@ import (
 	snapshotv1api "github.com/kubernetes-csi/external-snapshotter/client/v8/apis/volumesnapshot/v1"
 	snapshotFake "github.com/kubernetes-csi/external-snapshotter/client/v8/clientset/versioned/fake"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1api "k8s.io/api/apps/v1"
@@ -160,6 +161,16 @@ func TestExpose(t *testing.T) {
 	}
 
 	pvName := "pv-1"
+	fakePV := &corev1api.PersistentVolume{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: pvName,
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "PersistentVolume",
+			APIVersion: corev1api.SchemeGroupVersion.String(),
+		},
+	}
+
 	volumeAttachement1 := &storagev1api.VolumeAttachment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "va1",
@@ -207,7 +218,8 @@ func TestExpose(t *testing.T) {
 				OperationTimeout: time.Millisecond,
 				ExposeTimeout:    time.Millisecond,
 			},
-			err: "error wait volume snapshot ready: error to get VolumeSnapshot /fake-vs: volumesnapshots.snapshot.storage.k8s.io \"fake-vs\" not found",
+			kubeClientObj: []runtime.Object{fakePV},
+			err:           "error wait volume snapshot ready: error to get VolumeSnapshot /fake-vs: volumesnapshots.snapshot.storage.k8s.io \"fake-vs\" not found",
 		},
 		{
 			name:        "get vsc fail",
@@ -218,6 +230,7 @@ func TestExpose(t *testing.T) {
 				OperationTimeout: time.Millisecond,
 				ExposeTimeout:    time.Millisecond,
 			},
+			kubeClientObj: []runtime.Object{fakePV},
 			snapshotClientObj: []runtime.Object{
 				vsObject,
 			},
@@ -232,6 +245,7 @@ func TestExpose(t *testing.T) {
 				OperationTimeout: time.Millisecond,
 				ExposeTimeout:    time.Millisecond,
 			},
+			kubeClientObj: []runtime.Object{fakePV},
 			snapshotClientObj: []runtime.Object{
 				vsObject,
 				vscObj,
@@ -256,6 +270,7 @@ func TestExpose(t *testing.T) {
 				OperationTimeout: time.Millisecond,
 				ExposeTimeout:    time.Millisecond,
 			},
+			kubeClientObj: []runtime.Object{fakePV},
 			snapshotClientObj: []runtime.Object{
 				vsObject,
 				vscObj,
@@ -280,6 +295,7 @@ func TestExpose(t *testing.T) {
 				OperationTimeout: time.Millisecond,
 				ExposeTimeout:    time.Millisecond,
 			},
+			kubeClientObj: []runtime.Object{fakePV},
 			snapshotClientObj: []runtime.Object{
 				vsObject,
 				vscObj,
@@ -304,6 +320,7 @@ func TestExpose(t *testing.T) {
 				OperationTimeout: time.Millisecond,
 				ExposeTimeout:    time.Millisecond,
 			},
+			kubeClientObj: []runtime.Object{fakePV},
 			snapshotClientObj: []runtime.Object{
 				vsObject,
 				vscObj,
@@ -327,6 +344,7 @@ func TestExpose(t *testing.T) {
 				SourceNamespace: "fake-ns",
 				AccessMode:      "fake-mode",
 			},
+			kubeClientObj: []runtime.Object{fakePV},
 			snapshotClientObj: []runtime.Object{
 				vsObject,
 				vscObj,
@@ -343,6 +361,7 @@ func TestExpose(t *testing.T) {
 				ExposeTimeout:    time.Millisecond,
 				AccessMode:       AccessModeFileSystem,
 			},
+			kubeClientObj: []runtime.Object{fakePV},
 			snapshotClientObj: []runtime.Object{
 				vsObject,
 				vscObj,
@@ -363,6 +382,7 @@ func TestExpose(t *testing.T) {
 			ownerBackup: backup,
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName:     "fake-vs",
+				SourcePVName:     pvName,
 				SourceNamespace:  "fake-ns",
 				AccessMode:       AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
@@ -374,6 +394,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 			kubeReactors: []reactor{
 				{
@@ -392,6 +413,7 @@ func TestExpose(t *testing.T) {
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName:     "fake-vs",
 				SourceNamespace:  "fake-ns",
+				SourcePVName:     pvName,
 				AccessMode:       AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
 				ExposeTimeout:    time.Millisecond,
@@ -402,6 +424,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 		},
 		{
@@ -410,6 +433,7 @@ func TestExpose(t *testing.T) {
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName:     "fake-vs",
 				SourceNamespace:  "fake-ns",
+				SourcePVName:     pvName,
 				AccessMode:       AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
 				ExposeTimeout:    time.Millisecond,
@@ -420,6 +444,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 		},
 		{
@@ -428,6 +453,7 @@ func TestExpose(t *testing.T) {
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName:     "fake-vs",
 				SourceNamespace:  "fake-ns",
+				SourcePVName:     pvName,
 				AccessMode:       AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
 				ExposeTimeout:    time.Millisecond,
@@ -439,6 +465,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 			expectedVolumeSize: resource.NewQuantity(567890, ""),
 		},
@@ -448,6 +475,7 @@ func TestExpose(t *testing.T) {
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName:     "fake-vs",
 				SourceNamespace:  "fake-ns",
+				SourcePVName:     pvName,
 				StorageClass:     "fake-sc",
 				AccessMode:       AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
@@ -465,6 +493,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 			expectedReadOnlyPVC: true,
 		},
@@ -474,6 +503,7 @@ func TestExpose(t *testing.T) {
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName:     "fake-vs",
 				SourceNamespace:  "fake-ns",
+				SourcePVName:     pvName,
 				StorageClass:     "fake-sc",
 				AccessMode:       AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
@@ -491,6 +521,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 			expectedReadOnlyPVC:           true,
 			expectedBackupPVCStorageClass: "fake-sc-read-only",
@@ -501,6 +532,7 @@ func TestExpose(t *testing.T) {
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName:     "fake-vs",
 				SourceNamespace:  "fake-ns",
+				SourcePVName:     pvName,
 				StorageClass:     "fake-sc",
 				AccessMode:       AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
@@ -517,6 +549,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 			expectedBackupPVCStorageClass: "fake-sc-read-only",
 		},
@@ -526,6 +559,7 @@ func TestExpose(t *testing.T) {
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName:     "fake-vs",
 				SourceNamespace:  "fake-ns",
+				SourcePVName:     pvName,
 				StorageClass:     "fake-sc",
 				AccessMode:       AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
@@ -551,6 +585,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 			expectedAffinity: &corev1api.Affinity{
 				NodeAffinity: &corev1api.NodeAffinity{
@@ -576,6 +611,7 @@ func TestExpose(t *testing.T) {
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName:     "fake-vs",
 				SourceNamespace:  "fake-ns",
+				SourcePVName:     pvName,
 				StorageClass:     "fake-sc",
 				AccessMode:       AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
@@ -606,6 +642,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 			expectedBackupPVCStorageClass: "fake-sc-read-only",
 			expectedAffinity: &corev1api.Affinity{
@@ -632,6 +669,7 @@ func TestExpose(t *testing.T) {
 			exposeParam: CSISnapshotExposeParam{
 				SnapshotName:     "fake-vs",
 				SourceNamespace:  "fake-ns",
+				SourcePVName:     pvName,
 				StorageClass:     "fake-sc",
 				AccessMode:       AccessModeFileSystem,
 				OperationTimeout: time.Millisecond,
@@ -649,6 +687,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 			expectedBackupPVCStorageClass: "fake-sc-read-only",
 			expectedAffinity:              nil,
@@ -677,6 +716,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 			kubeReactors: []reactor{
 				{
@@ -714,6 +754,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 			},
 			expectedAffinity:      nil,
 			expectedPVCAnnotation: map[string]string{util.VSphereCNSFastCloneAnno: "true"},
@@ -742,6 +783,7 @@ func TestExpose(t *testing.T) {
 			},
 			kubeClientObj: []runtime.Object{
 				daemonSet,
+				fakePV,
 				volumeAttachement1,
 				volumeAttachement2,
 			},
@@ -1733,6 +1775,212 @@ end diagnose CSI exposer`,
 
 			diag := e.DiagnoseExpose(t.Context(), ownerObject)
 			assert.Equal(t, tt.expected, diag)
+		})
+	}
+}
+
+func Test_createBackupPodAffinity(t *testing.T) {
+
+	pvName := "fake-pv"
+	fakePvNoSelector := corev1api.PersistentVolume{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: pvName,
+		},
+	}
+
+	fakePvWithSelectors := corev1api.PersistentVolume{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: pvName,
+		},
+		Spec: corev1api.PersistentVolumeSpec{
+			NodeAffinity: &corev1api.VolumeNodeAffinity{
+				Required: &corev1api.NodeSelector{
+					NodeSelectorTerms: []corev1api.NodeSelectorTerm{
+						{
+							MatchExpressions: []corev1api.NodeSelectorRequirement{
+								{
+									Key:      "topology.kubernetes.io/zone",
+									Operator: corev1api.NodeSelectorOpIn,
+									Values:   []string{"us-east-1", "eu-central-1"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name             string
+		pvName           string
+		intolerableNodes []string
+		loadAffinity     []*kube.LoadAffinity
+		kubeClientObj    []runtime.Object
+		expectedAffinity *corev1api.Affinity
+	}{
+		{
+			name:             "no node selectors",
+			expectedAffinity: nil,
+		},
+		{
+			name: "with pv storage topography selectors",
+			expectedAffinity: &corev1api.Affinity{
+				NodeAffinity: &corev1api.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1api.NodeSelector{
+						NodeSelectorTerms: []corev1api.NodeSelectorTerm{
+							{
+								MatchExpressions: []corev1api.NodeSelectorRequirement{
+									{
+										Key:      "topology.kubernetes.io/zone",
+										Operator: corev1api.NodeSelectorOpIn,
+										Values:   []string{"us-east-1", "eu-central-1"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			pvName: pvName,
+			kubeClientObj: []runtime.Object{
+				&fakePvWithSelectors,
+			},
+		},
+		{
+			name:             "with intolerable nodes",
+			intolerableNodes: []string{"host1", "host2"},
+			expectedAffinity: &corev1api.Affinity{
+				NodeAffinity: &corev1api.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1api.NodeSelector{
+						NodeSelectorTerms: []corev1api.NodeSelectorTerm{
+							{
+								MatchExpressions: []corev1api.NodeSelectorRequirement{
+									{
+										Key:      "kubernetes.io/hostname",
+										Operator: corev1api.NodeSelectorOpNotIn,
+										Values:   []string{"host1", "host2"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			pvName: pvName,
+			kubeClientObj: []runtime.Object{
+				&fakePvNoSelector,
+			},
+		},
+		{
+			name: "with load affinity",
+			loadAffinity: []*kube.LoadAffinity{
+				{
+					NodeSelector: metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{
+							{
+								Key:      "cpu-vendor.node.kubevirt.io/Intel",
+								Operator: metav1.LabelSelectorOpDoesNotExist,
+							},
+							{
+								Key:      "kubernetes.io/arch",
+								Operator: metav1.LabelSelectorOpIn,
+								Values:   []string{"arm64", "ppc64le"},
+							},
+						},
+					},
+				},
+			},
+			expectedAffinity: &corev1api.Affinity{
+				NodeAffinity: &corev1api.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1api.NodeSelector{
+						NodeSelectorTerms: []corev1api.NodeSelectorTerm{
+							{
+								MatchExpressions: []corev1api.NodeSelectorRequirement{
+									{
+										Key:      "cpu-vendor.node.kubevirt.io/Intel",
+										Operator: corev1api.NodeSelectorOpDoesNotExist,
+									},
+									{
+										Key:      "kubernetes.io/arch",
+										Operator: corev1api.NodeSelectorOpIn,
+										Values:   []string{"arm64", "ppc64le"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			pvName: pvName,
+			kubeClientObj: []runtime.Object{
+				&fakePvNoSelector,
+			},
+		},
+		{
+			name: "with storageclass load affinity",
+			loadAffinity: []*kube.LoadAffinity{
+				{
+					NodeSelector: metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{
+							{
+								Key:      "px/enabled",
+								Operator: metav1.LabelSelectorOpIn,
+							},
+							{
+								Key:      "kubernetes.io/arch",
+								Operator: metav1.LabelSelectorOpNotIn,
+								Values:   []string{"arm64", "ppc64le"},
+							},
+						},
+					},
+					StorageClass: "fake-storage-class",
+				},
+			},
+			expectedAffinity: &corev1api.Affinity{
+				NodeAffinity: &corev1api.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &corev1api.NodeSelector{
+						NodeSelectorTerms: []corev1api.NodeSelectorTerm{
+							{
+								MatchExpressions: []corev1api.NodeSelectorRequirement{
+									{
+										Key:      "px/enabled",
+										Operator: corev1api.NodeSelectorOpIn,
+									},
+									{
+										Key:      "kubernetes.io/arch",
+										Operator: corev1api.NodeSelectorOpNotIn,
+										Values:   []string{"arm64", "ppc64le"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			pvName: pvName,
+			kubeClientObj: []runtime.Object{
+				&fakePvNoSelector,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			podAffinityParam := CSISnapshotAffinityParam{
+				LoadAffinity:     tt.loadAffinity,
+				IntolerableNodes: tt.intolerableNodes,
+				PVName:           tt.pvName,
+				StorageClassName: "fake-storage-class",
+			}
+			logr := logrus.WithFields(logrus.Fields{
+				"test": "affinity",
+			})
+			// Create fake Kubernetes client without config map
+			fakeKubeClient := fake.NewSimpleClientset(tt.kubeClientObj...)
+
+			affinity, _ := createPodAffinity(t.Context(), &podAffinityParam, fakeKubeClient.CoreV1(), logr)
+
+			assert.Equal(t, tt.expectedAffinity, affinity)
 		})
 	}
 }

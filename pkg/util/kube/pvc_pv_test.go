@@ -1909,3 +1909,61 @@ func TestGetPVCAttachingNodeOS(t *testing.T) {
 		})
 	}
 }
+
+func TestGetPVNodeSelectors(t *testing.T) {
+
+	pvNoSelector := builder.ForPersistentVolume("fake-pv").Result()
+
+	pvWithSelector := builder.ForPersistentVolume("fake-pv").NodeAffinityRequired(
+		builder.ForNodeSelector(
+			*builder.NewNodeSelectorTermBuilder().WithMatchExpression("topology.disk.csi.azure.com/zone",
+				"In", "us-central").Result(),
+		).Result(),
+	).Result()
+
+	testCases := []struct {
+		name              string
+		pvName            string
+		kubeClientObj     []runtime.Object
+		expectedSelectors []corev1api.NodeSelectorTerm
+		expectedErr       error
+	}{
+		{
+			name:              "pv name not passed in",
+			pvName:            "",
+			expectedSelectors: nil,
+			expectedErr:       errors.New("PV name is not set"),
+		},
+		{
+			name:              "pv has no selectors",
+			pvName:            "fake-pv",
+			kubeClientObj:     []runtime.Object{pvNoSelector},
+			expectedSelectors: nil,
+			expectedErr:       nil,
+		},
+		{
+			name:              "pv has selector terms",
+			pvName:            "fake-pv",
+			kubeClientObj:     []runtime.Object{pvWithSelector},
+			expectedSelectors: []corev1api.NodeSelectorTerm{*builder.NewNodeSelectorTermBuilder().WithMatchExpression("topology.disk.csi.azure.com/zone", "In", "us-central").Result()},
+			expectedErr:       nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeKubeClient := fake.NewSimpleClientset(tc.kubeClientObj...)
+
+			var kubeClient kubernetes.Interface = fakeKubeClient
+
+			nodeSelectorTerms, err := GetPVNodeSelector(t.Context(), tc.pvName, kubeClient.CoreV1())
+
+			assert.Equal(t, tc.expectedSelectors, nodeSelectorTerms)
+			if tc.expectedErr == nil {
+				assert.Nil(t, err)
+			} else {
+				assert.Equal(t, tc.expectedErr.Error(), err.Error())
+			}
+		})
+	}
+}

@@ -31,6 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/vmware-tanzu/velero/pkg/nodeagent"
@@ -79,7 +80,7 @@ type CSISnapshotExposeParam struct {
 	// VolumeSize specifies the size of the source volume
 	VolumeSize resource.Quantity
 
-	// Affinity specifies the node affinity of the backup pod
+	// Affinity specifies the node affinity of the backup pod from node-agent-config
 	Affinity []*kube.LoadAffinity
 
 	// BackupPVCConfig is the config for backupPVC (intermediate PVC) of snapshot data movement
@@ -100,6 +101,15 @@ type CSISnapshotExposeWaitParam struct {
 	// NodeClient is the client that is used to find the hosting pod
 	NodeClient client.Client
 	NodeName   string
+}
+
+// CSISnapshotAffinityParam encapsulates NodeAffinity parameters of VGDP Pods
+type CSISnapshotAffinityParam struct {
+	// Affinity specifies the node affinity of the backup pod from  node-agent-config
+	LoadAffinity     []*kube.LoadAffinity
+	IntolerableNodes []string
+	PVName           string
+	StorageClassName string
 }
 
 // NewCSISnapshotExposer create a new instance of CSI snapshot exposer
@@ -237,7 +247,17 @@ func (e *csiSnapshotExposer) Expose(ctx context.Context, ownerObject corev1api.O
 		}
 	}()
 
-	affinity := kube.GetLoadAffinityByStorageClass(csiExposeParam.Affinity, backupPVCStorageClass, curLog)
+	podNodeAffinity := CSISnapshotAffinityParam{
+		LoadAffinity:     csiExposeParam.Affinity,
+		IntolerableNodes: intoleratableNodes,
+		PVName:           csiExposeParam.SourcePVName,
+		StorageClassName: backupPVCStorageClass,
+	}
+
+	affinity, err := createPodAffinity(ctx, &podNodeAffinity, e.kubeClient.CoreV1(), curLog)
+	if err != nil {
+		return errors.Wrap(err, "error to create pod affinity")
+	}
 
 	backupPod, err := e.createBackupPod(
 		ctx,
@@ -253,7 +273,6 @@ func (e *csiSnapshotExposer) Expose(ctx context.Context, ownerObject corev1api.O
 		spcNoRelabeling,
 		csiExposeParam.NodeOS,
 		csiExposeParam.PriorityClassName,
-		intoleratableNodes,
 	)
 	if err != nil {
 		return errors.Wrap(err, "error to create backup pod")
@@ -581,13 +600,12 @@ func (e *csiSnapshotExposer) createBackupPod(
 	label map[string]string,
 	annotation map[string]string,
 	toleration []corev1api.Toleration,
-	affinity *kube.LoadAffinity,
+	affinity *corev1api.Affinity,
 	resources corev1api.ResourceRequirements,
 	backupPVCReadOnly bool,
 	spcNoRelabeling bool,
 	nodeOS string,
 	priorityClassName string,
-	intoleratableNodes []string,
 ) (*corev1api.Pod, error) {
 	podName := ownerObject.Name
 
@@ -687,23 +705,6 @@ func (e *csiSnapshotExposer) createBackupPod(
 		podOS.Name = kube.NodeOSLinux
 	}
 
-	var podAffinity *corev1api.Affinity
-	if len(intoleratableNodes) > 0 {
-		if affinity == nil {
-			affinity = &kube.LoadAffinity{}
-		}
-
-		affinity.NodeSelector.MatchExpressions = append(affinity.NodeSelector.MatchExpressions, metav1.LabelSelectorRequirement{
-			Key:      "kubernetes.io/hostname",
-			Values:   intoleratableNodes,
-			Operator: metav1.LabelSelectorOpNotIn,
-		})
-	}
-
-	if affinity != nil {
-		podAffinity = kube.ToSystemAffinity([]*kube.LoadAffinity{affinity})
-	}
-
 	pod := &corev1api.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
@@ -735,7 +736,7 @@ func (e *csiSnapshotExposer) createBackupPod(
 			},
 			NodeSelector: nodeSelector,
 			OS:           &podOS,
-			Affinity:     podAffinity,
+			Affinity:     affinity,
 			Containers: []corev1api.Container{
 				{
 					Name:            containerName,
@@ -768,4 +769,43 @@ func (e *csiSnapshotExposer) createBackupPod(
 	}
 
 	return e.kubeClient.CoreV1().Pods(ownerObject.Namespace).Create(ctx, pod, metav1.CreateOptions{})
+}
+
+func createPodAffinity(ctx context.Context,
+	nodeAffinity *CSISnapshotAffinityParam,
+	volumeGetter corev1client.CoreV1Interface,
+	log *logrus.Entry) (*corev1api.Affinity, error) {
+
+	var podAffinity *corev1api.Affinity
+
+	affinity := kube.GetLoadAffinityByStorageClass(nodeAffinity.LoadAffinity, nodeAffinity.StorageClassName, log)
+
+	pvNodeAffinity, err := kube.GetPVNodeSelector(ctx, nodeAffinity.PVName, volumeGetter)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get PV storage topology requirements")
+	}
+
+	if len(nodeAffinity.IntolerableNodes) > 0 {
+		if affinity == nil {
+			affinity = &kube.LoadAffinity{}
+		}
+		affinity.NodeSelector.MatchExpressions = append(affinity.NodeSelector.MatchExpressions, metav1.LabelSelectorRequirement{
+			Key:      "kubernetes.io/hostname",
+			Values:   nodeAffinity.IntolerableNodes,
+			Operator: metav1.LabelSelectorOpNotIn,
+		})
+	}
+	if affinity != nil {
+		podAffinity = kube.ToSystemAffinity([]*kube.LoadAffinity{affinity})
+	}
+
+	// assign the pod to the nodes where volume is for storage topography constraints
+	if len(pvNodeAffinity) > 0 {
+		if podAffinity == nil {
+			podAffinity = &corev1api.Affinity{}
+		}
+		kube.ExtendNodeSelectorTerms(podAffinity, pvNodeAffinity)
+	}
+
+	return podAffinity, nil
 }
